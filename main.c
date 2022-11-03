@@ -4,10 +4,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 int main() {
     initDisplay();  // inicializa o display lcd
-    char text[] = "SD ---- 2";
+    char text[] = "Testando!!!";
     write_textLCD(text);
 
     int uart_filestream = uart_config();
@@ -30,7 +31,7 @@ int main() {
         printf("========================================\n");
         printf("=>  ");
         scanf("%s", &opcao);
-        system("cls || clear"); 
+        //system("cls || clear"); 
         
         switch(opcao){
             case '1':
@@ -38,8 +39,9 @@ int main() {
                 break;
             case '2':
                 uart_send("0x04", uart_filestream);
-
-                //msg = uart_receive(uart_filestream);
+        	sleep(5);
+		//msg = uart_receive(uart_filestream);
+		//printf(msg);
                 //write_textLCD(msg);
                 break;
             case '3':
