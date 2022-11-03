@@ -92,14 +92,16 @@ void loop() {
 
   if(Serial.available() > 0){
     String msg = Serial.readString();
+    
     if(msg == "0x03"){
+    
       
     }else if(msg == "0x04"){
-       
+       Serial.write("Ola"); //testando envio das mensagens
     }else if(msg == "0x05"){
        
     }else if(msg == "0x06"){
-       digitalWrite(LED_BUILTIN, LOW);
+       //digitalWrite(LED_BUILTIN, LOW);
     }else {
       
     }
