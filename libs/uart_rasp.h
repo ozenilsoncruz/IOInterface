@@ -49,16 +49,19 @@ void uart_send(char* msg, int uart_filestream){
  * Envia uma mensagem via UART
  * @param uart_filestream - arquivo uart
 */
-char* uart_receive(int uart_filestream){
-    char* mensagem = ""; //define o tamanho da mensagem
-	int msg_length = read(uart_filestream, (void*)mensagem, 32);
+void uart_receive(int uart_filestream){
+    	//char* msg = "";
+	unsigned char mensagem[256]; //define o tamanho da mensagem
+	int msg_length = read(uart_filestream, (void*)mensagem, 255);
 	if (msg_length < 0){
 		printf("\nErro na leitura!\n");
 	}
 	else{
 		mensagem[msg_length] = '\0';
+		//strcpy(msg, mensagem);
 	}
-    return mensagem;
+	printf(mensagem);
+    	//return msg;
 }
 
 #endif
