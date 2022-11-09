@@ -9,7 +9,8 @@
 
 
 char* msgg = "";
-pthread_mutex_t mutex; // variavel de controle para msg
+char* solicitacao = "";
+pthread_t id_thread;
 
 /**
  * Recebe a mensagem e escreve no display continuamente
@@ -18,8 +19,9 @@ pthread_mutex_t mutex; // variavel de controle para msg
 void * receiveMsg(void * uart){
     int uart_filestream = *((int *) uart);
     char texto[] = "";
-    while(strcmp(msgg, "F") != 0){ // enquanto a mensagem de finalizacao n$
+    while(strcmp(msgg, "") != 0 || strcmp(solicitacao, "") != 0){ // enquanto a mensagem de finalizacao n$
         if(strcmp(msgg, "") != 0){
+            uart_send(solicitacao, uart_filestream);
             char* result = uart_receive(uart_filestream);
             if(strcmp(result, "") != 0){
                 sprintf(texto, "%s%s", msgg, result); // concatena o conte$
@@ -29,17 +31,15 @@ void * receiveMsg(void * uart){
     }
 }
 
+
 /**
- * Altera o valor da mensagem utilizando mutex para evitar conflitos
- * @param nova_msg - nova mensagem a ser atribuida
+ * Para a thread de recebimento de mensagens
 */
-void alteraMsg(char* nova_msg){
-    //pthread_mutex_lock(&mutex); // segura o recurso
-    msgg = nova_msg;
-    //pthread_mutex_unlock(&mutex); // libera o recurso
-
+void encerrarThread(){
+    msgg = "";
+    solicitacao = "";
+    pthread_join(id_thread, NULL);
 }
-
 
 int main() {
     initDisplay();  // inicializa o display lcd
@@ -49,12 +49,7 @@ int main() {
     if(uart_filestream == -1){
         printf("\nFalha na abertura do arquivo UART!\n");
         return 0;
-    }
-
-    pthread_t id_thread;
-
-    //cria uma thread que recebe as mensagens
-    pthread_create(&id_thread, NULL, receiveMsg, &uart_filestream);
+    }    
 
     char sensor[] = "0";
     char opcao = '/';
@@ -74,45 +69,44 @@ int main() {
 
         switch(opcao){
             case '1':
-                alteraMsg("0");
+                encerrarThread();
+
                 uart_send("30", uart_filestream);
                 if(strcmp(uart_receive(uart_filestream), "00") == 0){
                     write_textLCD("NodeMCU OK!");
                 }
                 break;
             case '2': // sensor analogico
-                uart_send("40", uart_filestream);
+                encerrarThread();
 
-		alteraMsg("Sensor A: ");
-		/*char texto[] = "";
-		char* result = uart_receive(uart_filestream);
-		sprintf(texto, "Sensor A: %s", result);
-
-		write_textLCD(texto);*/
+                msgg = "Sensor A: ";
+                solicitacao = "40";
+                //cria uma thread que recebe e envia as mensagens
+                pthread_create(&id_thread, NULL, receiveMsg, &uart_filestream);
                 break;
             case '3': // sensor digital
+                encerrarThread();
+
                 printf("\nQual sensor digital deseja selecionar? [1-8] \n =>  ");
                 scanf("%s", &sensor);
 
                 if(sensor[0] >= '1' && sensor[0] <= '8' && strlen(sensor) == 1){
-                    uart_send("5", uart_filestream);
-	  	    uart_send(sensor, uart_filestream);
-
-		    char texto[] = "";
-		    sprintf(texto, "Sensor D%s: ", sensor);
-		    alteraMsg(texto);
-		    /*
                     char texto[] = "";
-                    char* result = uart_receive(uart_filestream);
-                    sprintf(texto, "Sensor D%s: %s", sensor, result);
+                    char solicicatacao_sensor[] = "";
+                    sprintf(texto, "Sensor D%s: ", sensor);
+                    sprintf(solicicatacao_sensor, "5%s: ", sensor);
 
-                    write_textLCD(texto);*/
+                    msgg = texto;
+                    solicitacao = solicicatacao_sensor;
+                    //cria uma thread que recebe e envia as mensagens
+                    pthread_create(&id_thread, NULL, receiveMsg, &uart_filestream);
                 }else{
-                    printf("\nOpção inválida!\n");
+                    printf("\nOpção inválida!\n\n");
                 }
                 break;
             case '4':
-                alteraMsg("");
+                encerrarThread();
+
                 uart_send("60", uart_filestream);
                 if(uart_receive(uart_filestream)[0] == '1'){
                     write_textLCD("LED ligado!");
@@ -121,7 +115,8 @@ int main() {
                 }
                 break;
             case '0':
-		alteraMsg("F"); // sinal para a finalizacao da thread
+                encerrarThread();
+
                 printf("\n\n\tFinalizando...\n");
                 break;
             default:
